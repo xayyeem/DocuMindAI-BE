@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AuthService.Domain.Common;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,6 +10,8 @@ namespace AuthService.Domain.ValueObjects
 {
     public sealed class Email : IEquatable<Email>
     {
+        private static readonly Regex EmailRegex = new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
         public string Value { get; }
 
         private Email(string value)
@@ -16,25 +19,28 @@ namespace AuthService.Domain.ValueObjects
             Value = value;
         }
 
-        public static Email Create(string email)
+        private Email()
+        {
+            Value = string.Empty;
+        }
+
+        public static Result<Email> Create(string email)
         {
             if (string.IsNullOrWhiteSpace(email))
-                throw new ArgumentException("Email is required.");
+                return Result<Email>.Failure(DomainErrors.Email.Empty);
 
             email = email.Trim().ToLowerInvariant();
 
-            if (!IsValid(email))
-                throw new ArgumentException("Invalid email address.");
+            if (!EmailRegex.IsMatch(email))
+                return Result<Email>.Failure(DomainErrors.Email.Invalid);
 
-            return new Email(email);
+            return Result<Email>.Success(new Email(email));
         }
 
-        private static bool IsValid(string email)
+        public override string ToString()
         {
-            return Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.IgnoreCase);
+            return Value;
         }
-
-        public override string ToString() => Value;
 
         public override bool Equals(object? obj)
         {
@@ -43,7 +49,8 @@ namespace AuthService.Domain.ValueObjects
 
         public bool Equals(Email? other)
         {
-            return other is not null && Value == other.Value;
+            return other is not null &&
+                   Value == other.Value;
         }
 
         public override int GetHashCode()
@@ -52,6 +59,8 @@ namespace AuthService.Domain.ValueObjects
         }
 
         public static implicit operator string(Email email)
-            => email.Value;
+        {
+            return email.Value;
+        }
     }
 }
