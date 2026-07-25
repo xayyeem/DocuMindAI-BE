@@ -11,5 +11,8 @@ namespace AuthService.Application.Features.Interfaces
     {
         Task AddAsync(RefreshToken refreshtoken, CancellationToken cancellationToken = default);
         Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken cancellationToken = default);
+        Task UpdateAsync(
+    RefreshToken refreshToken,
+    CancellationToken cancellationToken = default);
     }
 }

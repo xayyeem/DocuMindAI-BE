@@ -13,6 +13,7 @@ namespace AuthService.Application.Features.Interfaces
     {
         Task<Result<RegisterResponse>> RegisterAsync(RegisterRequest request,
             CancellationToken cancellationToken = default);
+        Task<Result<RefreshTokenResponse>> RefreshTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default);
         Task<Result<LoginResponse>> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default);
     }
 }

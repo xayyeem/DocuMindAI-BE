@@ -1,6 +1,7 @@
 ﻿using AuthService.Application.Features.DTOs;
 using AuthService.Application.Features.DTOs.Authentication;
 using AuthService.Application.Features.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AuthService.API.Controllers
@@ -38,6 +39,33 @@ namespace AuthService.API.Controllers
             if (result.IsFailure)
             {
                 return BadRequest(result.Error);
+            }
+
+            return Ok(result.Value);
+        }
+
+
+        [Authorize]
+        [HttpGet("me")]
+        public IActionResult Me()
+        {
+            return Ok(new
+            {
+                Message = "You are authenticated.",
+                UserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+                Email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value,
+                Role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value
+            });
+        }
+
+        [HttpPost("refresh")]
+        public async Task<IActionResult> RefreshToken(RefreshTokenRequest request, CancellationToken cancellationToken)
+        {
+            var result = await _authService.RefreshTokenAsync(request, cancellationToken);
+
+            if (result.IsFailure)
+            {
+                return Unauthorized(result.Error);
             }
 
             return Ok(result.Value);

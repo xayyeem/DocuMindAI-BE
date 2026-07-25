@@ -9,6 +9,9 @@ using Microsoft.Extensions.DependencyInjection;
 using AuthService.Application.Services;
 using FluentValidation;
 using AuthService.Infrastructure.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace AuthService.Infrastructure.Extensionss
 {
@@ -27,6 +30,28 @@ namespace AuthService.Infrastructure.Extensionss
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
             services.AddScoped<IJwtTokenProvider, JwtTokenProvider>();
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    var jwtOptions = configuration
+                        .GetSection(JwtOptions.SectionName)
+                        .Get<JwtOptions>()!;
+
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+
+                        ValidIssuer = jwtOptions.Issuer,
+                        ValidAudience = jwtOptions.Audience,
+
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(jwtOptions.Key))
+                    };
+                });
             return services;
         }
 
@@ -34,7 +59,6 @@ namespace AuthService.Infrastructure.Extensionss
         {
             services.AddScoped<IAuthService, AuthService.Application.Services.AuthService>();
             services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
-            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             return services;
         }
     }

@@ -27,7 +27,15 @@ namespace AuthService.Infrastructure.Repositories
         public async Task<RefreshToken?> GetByTokenAsync(string token,CancellationToken cancellationToken = default)
         {
             return await _context.RefreshTokens
-                .FirstOrDefaultAsync(x => x.Token == token, cancellationToken);
+        .Include(x => x.User)
+        .FirstOrDefaultAsync(x => x.Token == token, cancellationToken);
+        }
+
+        public Task UpdateAsync(RefreshToken refreshToken,CancellationToken cancellationToken = default)
+        {
+            _context.RefreshTokens.Update(refreshToken);
+
+            return Task.CompletedTask;
         }
     }
 }

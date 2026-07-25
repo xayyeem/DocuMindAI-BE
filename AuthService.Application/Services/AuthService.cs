@@ -64,6 +64,54 @@ namespace AuthService.Application.Services
             return Result<LoginResponse>.Success(response);
         }
 
+        public async Task<Result<RefreshTokenResponse>> RefreshTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default)
+        {
+            var refreshToken = await _refreshTokenRepository.GetByTokenAsync(request.RefreshToken,cancellationToken);
+            if(refreshToken is null)
+            {
+                return Result<RefreshTokenResponse>.Failure(new Error("Authentication.InvalidRefreshToken", "Invalid refresh token."));
+            }
+            if (refreshToken.IsRevoked)
+            {
+                return Result<RefreshTokenResponse>.Failure(new Error("Authentication.RevokedRefreshToken", "Refresh token has been revoked."));
+            }
+            if (refreshToken.IsExpired)
+            {
+                return Result<RefreshTokenResponse>.Failure(new Error("Authentication.ExpiredRefreshToken", "Refresh token has expired."));
+            }
+
+            // Revoke old refresh token
+            refreshToken.Revoke();
+
+            // Generate new access token
+            var accessToken = _jwtTokenProvider.GenerateAccessToken(refreshToken.User);
+
+            // Generate new refresh token
+            var newRefreshToken = _jwtTokenProvider.GenerateRefreshToken();
+
+            // Create new refresh token entity
+            var newRefreshTokenEntity = new RefreshToken(newRefreshToken,refreshToken.UserId);
+
+            // Save new refresh token
+            await _refreshTokenRepository.AddAsync(newRefreshTokenEntity, cancellationToken);
+
+            // Update old refresh token
+            await _refreshTokenRepository.UpdateAsync(refreshToken, cancellationToken);
+
+            // Save all changes
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Create response
+            var response = new RefreshTokenResponse
+            {
+                AccessToken = accessToken,
+                RefreshToken = newRefreshToken,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(15)
+            };
+
+            return Result<RefreshTokenResponse>.Success(response);
+        }
+
         public async Task<Result<RegisterResponse>> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
         {
             if(await _userRepository.ExistsByEmailAsync(request.Email, cancellationToken))

@@ -17,6 +17,7 @@ namespace AuthService.Domain.Entities
         public DateTime CreatedAt { get; private set; }
 
         public bool IsRevoked { get; private set; }
+        public bool IsExpired => DateTime.UtcNow >= ExpiresAt;
 
         public Guid UserId { get; private set; }
 
