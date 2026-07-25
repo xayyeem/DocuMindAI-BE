@@ -70,5 +70,21 @@ namespace AuthService.API.Controllers
 
             return Ok(result.Value);
         }
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout(LogoutRequest request, CancellationToken cancellationToken)
+        {
+            var result = await _authService.LogoutAsync(request, cancellationToken);
+
+            if (result.IsFailure)
+            {
+                return BadRequest(result.Error);
+            }
+
+            return Ok(new
+            {
+                Message = "Logged out successfully."
+            });
+        }
     }
 }

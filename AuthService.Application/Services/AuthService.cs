@@ -140,5 +140,18 @@ namespace AuthService.Application.Services
                 Email = userResult.Value.Email.Value
             });
         }
+
+        public async Task<Result> LogoutAsync(LogoutRequest request, CancellationToken cancellation)
+        {
+            var refreshToken = await _refreshTokenRepository.GetByTokenAsync(request.RefreshToken, cancellation);
+            if (refreshToken is null)
+            {
+                return Result.Failure(new Error("Authentication.InvalidRefreshToken", "Invalid refresh token."));
+            }
+            refreshToken.Revoke();
+            await _refreshTokenRepository.UpdateAsync(refreshToken, cancellation);
+            await _unitOfWork.SaveChangesAsync(cancellation);
+            return Result.Success();
+        }
     }
 }

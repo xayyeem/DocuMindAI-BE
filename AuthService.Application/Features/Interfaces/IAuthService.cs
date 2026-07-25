@@ -15,5 +15,6 @@ namespace AuthService.Application.Features.Interfaces
             CancellationToken cancellationToken = default);
         Task<Result<RefreshTokenResponse>> RefreshTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default);
         Task<Result<LoginResponse>> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default);
+        Task<Result> LogoutAsync(LogoutRequest request, CancellationToken cancellationToken = default);
     }
 }
