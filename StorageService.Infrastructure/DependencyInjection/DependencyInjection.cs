@@ -2,13 +2,11 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StorageService.Application.Features.Interfaces;
+using StorageService.Application.Services;
 using StorageService.Infrastructure.Persistence;
+using StorageService.Infrastructure.Persistence.Configurations;
 using StorageService.Infrastructure.Repositories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using StorageService.Infrastructure.Storage;
 
 namespace StorageService.Infrastructure.DependencyInjection
 {
@@ -22,8 +20,17 @@ namespace StorageService.Infrastructure.DependencyInjection
                 options.UseNpgsql(
                     configuration.GetConnectionString("DefaultConnection")));
 
+            services.Configure<StorageOptions>(
+                configuration.GetSection(StorageOptions.SectionName));
+
+            services.AddScoped<IUnitOfWork>(sp =>
+                sp.GetRequiredService<ApplicationDbContext>());
+
             services.AddScoped<IDocumentRepository, DocumentRepository>();
-            services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
+
+            services.AddScoped<IDocumentStorage, LocalDocumentStorage>();
+            services.AddScoped<IDocumentService, DocumentService>();
+            services.AddScoped<IDocumentService, DocumentService>();
             return services;
         }
     }

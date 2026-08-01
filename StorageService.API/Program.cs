@@ -1,5 +1,4 @@
-using AuthService.Infrastructure.Extensionss;
-
+using StorageService.Infrastructure.DependencyInjection;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
